@@ -76,13 +76,13 @@
   endif
 
   if use_mobile_slider and use_desktop_slider
-    assign container_class = 'flex overflow-x-auto snap-x snap-mandatory gap-4 lg:gap-6'
+    assign container_class = 'flex overflow-x-auto snap-x snap-mandatory gap-4 lg:gap-6 px-1 scroll-px-1'
     assign card_wrapper_class = 'snap-start shrink-0 w-[78%] sm:w-[48%] ' | append: desktop_slider_card_class
   elsif use_mobile_slider
-    assign container_class = 'flex overflow-x-auto snap-x snap-mandatory gap-4 lg:grid lg:overflow-visible lg:gap-6 ' | append: desktop_cols_class
+    assign container_class = 'flex overflow-x-auto snap-x snap-mandatory gap-4 px-1 scroll-px-1 lg:grid lg:overflow-visible lg:gap-6 lg:px-0 lg:scroll-px-0 ' | append: desktop_cols_class
     assign card_wrapper_class = 'snap-start shrink-0 w-[78%] sm:w-[48%] lg:w-auto'
   elsif use_desktop_slider
-    assign container_class = 'grid gap-4 lg:flex lg:overflow-x-auto lg:snap-x lg:snap-mandatory lg:gap-6 ' | append: mobile_cols_class
+    assign container_class = 'grid gap-4 lg:flex lg:overflow-x-auto lg:snap-x lg:snap-mandatory lg:gap-6 lg:px-1 lg:scroll-px-1 ' | append: mobile_cols_class
     assign card_wrapper_class = 'lg:snap-start lg:shrink-0 ' | append: desktop_slider_card_class
   else
     assign container_class = 'grid gap-4 lg:gap-6 ' | append: mobile_cols_class | append: ' ' | append: desktop_cols_class
