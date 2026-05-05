@@ -18,9 +18,9 @@
       "settings": {
         "heading": "Featured products",
         "collection": "all",
-        "products_to_show": 4,
+        "products_to_show": 8,
         "columns_desktop": "4",
-        "columns_mobile": "1",
+        "columns_mobile": "slider",
         "show_vendor": true,
         "show_swatches": true,
         "show_sale_badge": true,
@@ -32,8 +32,5 @@
       }
     }
   },
-  "order": [
-    "main",
-    "featured-products"
-  ]
+  "order": ["main", "featured-products"]
 }
