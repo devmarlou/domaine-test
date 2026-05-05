@@ -57,7 +57,12 @@
   },
   "sections": {
     "featured_products": {
-      "empty_state": "Choose a collection to display products."
+      "empty_state": "Choose a collection to display products.",
+      "slider": {
+        "previous": "Previous products",
+        "next": "Next products",
+        "counter_html": "{{ current }} of {{ total }}"
+      }
     }
   }
 }

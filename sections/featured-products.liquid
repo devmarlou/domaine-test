@@ -34,6 +34,12 @@
   Cards-per-row + slider-card-width Tailwind classes are looked up via
   `case` (Tailwind JIT scans source for full class strings — dynamic
   concatenation like `grid-cols-{{ n }}` would not be picked up).
+
+  Slider controls (desktop only) — prev/next chevrons + "X of Y"
+  counter sit inline with the heading. Native scroll-snap drives the
+  motion; JS only handles button clicks, counter updates (via
+  IntersectionObserver on each card), and disabled state at the
+  scroll boundaries. See frontend/entrypoints/main.js.
 {% endcomment %}
 
 {%- liquid
@@ -75,14 +81,21 @@
     assign use_desktop_slider = true
   endif
 
+  assign products_total = collection.products_count | at_most: products_to_show
+
+  assign show_controls = false
+  if use_desktop_slider and products_total > columns_desktop_n
+    assign show_controls = true
+  endif
+
   if use_mobile_slider and use_desktop_slider
-    assign container_class = 'flex overflow-x-auto snap-x snap-mandatory gap-4 lg:gap-6 px-1 scroll-px-1'
+    assign container_class = 'flex overflow-x-auto no-scrollbar snap-x snap-mandatory gap-4 lg:gap-6 px-1 scroll-px-1'
     assign card_wrapper_class = 'snap-start shrink-0 w-[78%] sm:w-[48%] ' | append: desktop_slider_card_class
   elsif use_mobile_slider
-    assign container_class = 'flex overflow-x-auto snap-x snap-mandatory gap-4 px-1 scroll-px-1 lg:grid lg:overflow-visible lg:gap-6 lg:px-0 lg:scroll-px-0 ' | append: desktop_cols_class
+    assign container_class = 'flex overflow-x-auto no-scrollbar snap-x snap-mandatory gap-4 px-1 scroll-px-1 lg:grid lg:overflow-visible lg:gap-6 lg:px-0 lg:scroll-px-0 ' | append: desktop_cols_class
     assign card_wrapper_class = 'snap-start shrink-0 w-[78%] sm:w-[48%] lg:w-auto'
   elsif use_desktop_slider
-    assign container_class = 'grid gap-4 lg:flex lg:overflow-x-auto lg:snap-x lg:snap-mandatory lg:gap-6 lg:px-1 lg:scroll-px-1 ' | append: mobile_cols_class
+    assign container_class = 'grid gap-4 lg:flex lg:overflow-x-auto lg:no-scrollbar lg:snap-x lg:snap-mandatory lg:gap-6 lg:px-1 lg:scroll-px-1 ' | append: mobile_cols_class
     assign card_wrapper_class = 'lg:snap-start lg:shrink-0 ' | append: desktop_slider_card_class
   else
     assign container_class = 'grid gap-4 lg:gap-6 ' | append: mobile_cols_class | append: ' ' | append: desktop_cols_class
@@ -90,12 +103,50 @@
   endif
 -%}
 
-<div class="featured-products full-width grid grid-cols-[var(--content-grid)] pt-12 pb-10 lg:pt-20 lg:pb-16 bg-[color:var(--section-bg,#F7F7F7)]" style="--card-border-color: {{ section.settings.card_border_color }}; --card-radius: {{ section.settings.card_border_radius }}px; --section-bg: {{ section.settings.section_background_color }}; --badge-bg: {{ section.settings.badge_background_color }};">
+<div class="featured-products full-width grid grid-cols-[var(--content-grid)] pt-12 pb-10 lg:pt-20 lg:pb-16 bg-[color:var(--section-bg,#F7F7F7)]" style="--card-border-color: {{ section.settings.card_border_color }}; --card-radius: {{ section.settings.card_border_radius }}px; --section-bg: {{ section.settings.section_background_color }}; --badge-bg: {{ section.settings.badge_background_color }};" data-featured-products>
   <div class="col-start-2">
-    {%- if heading != blank -%}
-      <h2 class="text-2xl md:text-3xl font-medium text-[color:var(--color-foreground,#333333)] mb-8 md:mb-12">
-        {{ heading }}
-      </h2>
+    {%- if heading != blank or show_controls -%}
+      <div class="flex items-end justify-between gap-4 mb-8 md:mb-12">
+        {%- if heading != blank -%}
+          <h2 class="text-2xl md:text-3xl font-medium text-[color:var(--color-foreground,#333333)]">
+            {{ heading }}
+          </h2>
+        {%- else -%}
+          <div></div>
+        {%- endif -%}
+
+        {%- if show_controls -%}
+          <div class="hidden lg:flex items-center gap-4 shrink-0" data-slider-controls>
+            <span class="text-sm tabular-nums text-[color:var(--color-foreground,#333333)] opacity-70">
+              {%- capture current_html -%}<span data-slider-current>{{ columns_desktop_n }}</span>{%- endcapture -%}
+              {%- capture total_html -%}<span data-slider-total>{{ products_total }}</span>{%- endcapture -%}
+              {{ 'sections.featured_products.slider.counter_html' | t: current: current_html, total: total_html }}
+            </span>
+            <div class="flex gap-2">
+              <button
+                type="button"
+                data-slider-prev
+                aria-label="{{ 'sections.featured_products.slider.previous' | t }}"
+                class="flex size-10 items-center justify-center rounded-full border border-[color:var(--card-border-color,#E8E8E8)] text-[color:var(--color-foreground,#333333)] cursor-pointer motion-safe:transition-colors hover:bg-black/5 focus-visible:ring-2 focus-visible:ring-[color:var(--color-foreground,#333333)] focus-visible:outline-none disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <svg class="size-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 0 1 0 1.06L9.06 10l3.73 3.71a.75.75 0 1 1-1.06 1.06l-4.24-4.24a.75.75 0 0 1 0-1.06l4.24-4.24a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                data-slider-next
+                aria-label="{{ 'sections.featured_products.slider.next' | t }}"
+                class="flex size-10 items-center justify-center rounded-full border border-[color:var(--card-border-color,#E8E8E8)] text-[color:var(--color-foreground,#333333)] cursor-pointer motion-safe:transition-colors hover:bg-black/5 focus-visible:ring-2 focus-visible:ring-[color:var(--color-foreground,#333333)] focus-visible:outline-none disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <svg class="size-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 0 1 0-1.06L10.94 10 7.21 6.29a.75.75 0 1 1 1.06-1.06l4.24 4.24a.75.75 0 0 1 0 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        {%- endif -%}
+      </div>
     {%- endif -%}
 
     {%- if collection == blank or collection.products_count == 0 -%}
@@ -103,7 +154,7 @@
         {{ 'sections.featured_products.empty_state' | t }}
       </p>
     {%- else -%}
-      <div class="{{ container_class }}">
+      <div class="{{ container_class }}"{% if show_controls %} data-slider-track{% endif %}>
         {%- for product in collection.products limit: products_to_show -%}
           <div class="{{ card_wrapper_class }}">
             {%- render 'product-card'

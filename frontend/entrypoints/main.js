@@ -73,6 +73,86 @@ async function swapImage(img, src, srcset) {
   if (srcset) img.srcset = srcset
 }
 
+/**
+ * Featured-products slider — prev/next + counter.
+ *
+ * Used by:
+ *   - sections/featured-products.liquid
+ *
+ * Behavior:
+ *   - Click [data-slider-prev]/[data-slider-next]: scrollBy ±track.clientWidth
+ *     with smooth behavior (one "page" per click).
+ *   - IntersectionObserver on each card (root = track, threshold 0.5):
+ *     tracks which card indexes are visible; counter shows max+1.
+ *   - On scroll: toggle prev.disabled at left edge, next.disabled at right.
+ *   - Re-init on shopify:section:load for theme editor live preview.
+ *
+ * Implementation notes:
+ *   - Track is the scroll-snap container; cards are direct children, so
+ *     `track.children` indexes line up with product order.
+ *   - `getRootNode()` is used so the handler works in editor iframes.
+ */
+
+function initFeaturedSlider(root) {
+  const track = root.querySelector('[data-slider-track]')
+  if (!track) return
+
+  const counter = root.querySelector('[data-slider-current]')
+  const prevBtn = root.querySelector('[data-slider-prev]')
+  const nextBtn = root.querySelector('[data-slider-next]')
+  const cards = Array.from(track.children)
+  if (cards.length === 0) return
+
+  const visible = new Set()
+
+  const updateCounter = () => {
+    if (!counter || visible.size === 0) return
+    counter.textContent = String(Math.max(...visible) + 1)
+  }
+
+  const updateButtons = () => {
+    if (!prevBtn || !nextBtn) return
+    prevBtn.disabled = track.scrollLeft <= 1
+    nextBtn.disabled = track.scrollLeft + track.clientWidth >= track.scrollWidth - 1
+  }
+
+  if (counter) {
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const idx = cards.indexOf(entry.target)
+          if (idx === -1) continue
+          if (entry.intersectionRatio >= 0.5) visible.add(idx)
+          else visible.delete(idx)
+        }
+        updateCounter()
+      },
+      { root: track, threshold: 0.5 },
+    )
+    cards.forEach((card) => io.observe(card))
+  }
+
+  if (prevBtn && nextBtn) {
+    prevBtn.addEventListener('click', () => {
+      track.scrollBy({ left: -track.clientWidth, behavior: 'smooth' })
+    })
+    nextBtn.addEventListener('click', () => {
+      track.scrollBy({ left: track.clientWidth, behavior: 'smooth' })
+    })
+    track.addEventListener('scroll', () => requestAnimationFrame(updateButtons), {
+      passive: true,
+    })
+    updateButtons()
+  }
+}
+
+document.querySelectorAll('[data-featured-products]').forEach(initFeaturedSlider)
+
+document.addEventListener('shopify:section:load', (event) => {
+  const root = event.target.querySelector?.('[data-featured-products]')
+  if (root) initFeaturedSlider(root)
+})
+
 document.addEventListener('click', async (event) => {
   const swatch = event.target.closest('[data-swatch]')
   if (!swatch) return
