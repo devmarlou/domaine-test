@@ -1,0 +1,276 @@
+{% comment %}
+  Section: Featured Products
+
+  Renders a grid (or mobile slider) of product cards from a chosen collection.
+
+  Renders:
+  - snippets/product-card.liquid (one per product)
+
+  Schema:
+  - Content: heading, collection, products_to_show
+  - Layout: columns_desktop (2–6), columns_mobile (1 / 2 / slider)
+  - Display: show_vendor, show_swatches, show_sale_badge,
+  show_sold_out_badge
+  - Card: image_ratio, card_border_color, card_border_radius,
+  badge_background_color, sale_badge_text, sold_out_badge_text
+
+  Implementation notes
+  ────────────────────
+  Card style overrides emit CSS custom properties on the section root
+  (--card-border-color, --card-radius, --badge-bg); the card snippet
+  reads them via Tailwind arbitrary values, e.g.
+  `border-[color:var(--card-border-color)]`.
+
+  Mobile slider mode swaps the container from grid → flex overflow-x-auto
+  with snap-x snap-mandatory; desktop grid takes over via the `lg:` prefix.
+
+  Cards-per-row Tailwind classes are looked up via `case` (Tailwind JIT
+  scans source for full class strings — dynamic concatenation like
+  `grid-cols-{{ n }}` would not be picked up).
+
+  Layout uses the theme's `full-width` escape (defined in
+  `assets/critical.css`) so the background spans edge-to-edge while an
+  inner wrapper centers content with `mx-auto max-w-[var(--page-width)]`
+  and applies the page margin. The mobile slider bleeds into the page
+  margin via negative `-mx-[var(--page-margin)]` to extend to the
+  viewport edges, then re-aligns to grid on `lg:` breakpoint.
+{% endcomment %}
+
+{%- liquid
+  assign heading = section.settings.heading
+  assign collection = collections[section.settings.collection]
+  assign products_to_show = section.settings.products_to_show
+  assign columns_desktop = section.settings.columns_desktop
+  assign columns_mobile = section.settings.columns_mobile
+
+  case columns_desktop
+    when '2'
+      assign desktop_cols_class = 'lg:grid-cols-2'
+    when '3'
+      assign desktop_cols_class = 'lg:grid-cols-3'
+    else
+      assign desktop_cols_class = 'lg:grid-cols-4'
+  endcase
+
+  case columns_mobile
+    when '2'
+      assign mobile_cols_class = 'grid-cols-2'
+    else
+      assign mobile_cols_class = 'grid-cols-1'
+  endcase
+
+  assign use_slider = false
+  if columns_mobile == 'slider'
+    assign use_slider = true
+  endif
+-%}
+
+<div class="featured-products full-width grid grid-cols-[var(--content-grid)] pt-12 pb-10 lg:pt-20 lg:pb-16 bg-[color:var(--section-bg,#F7F7F7)]" style="--card-border-color: {{ section.settings.card_border_color }}; --card-radius: {{ section.settings.card_border_radius }}px; --section-bg: {{ section.settings.section_background_color }}; --badge-bg: {{ section.settings.badge_background_color }};">
+  <div class="col-start-2">
+    {%- if heading != blank -%}
+      <h2 class="text-2xl md:text-3xl font-medium text-[color:var(--color-foreground,#333333)] mb-8 md:mb-12">
+        {{ heading }}
+      </h2>
+    {%- endif -%}
+
+    {%- if collection == blank or collection.products_count == 0 -%}
+      <p class="text-[color:var(--color-foreground,#333333)] opacity-60">
+        {{ 'sections.featured_products.empty_state' | t }}
+      </p>
+    {%- elsif use_slider -%}
+      <div class="flex overflow-x-auto snap-x snap-mandatory gap-4 lg:grid {{ desktop_cols_class }} lg:gap-6">
+        {%- for product in collection.products limit: products_to_show -%}
+          <div class="snap-start shrink-0 w-[78%] sm:w-[48%] lg:w-auto">
+            {%- render 'product-card'
+              , product: product
+              , show_vendor: section.settings.show_vendor
+              , show_swatches: section.settings.show_swatches
+              , show_sale_badge: section.settings.show_sale_badge
+              , show_sold_out_badge: section.settings.show_sold_out_badge
+              , image_ratio: section.settings.image_ratio
+              , sale_badge_text: section.settings.sale_badge_text
+              , sold_out_badge_text: section.settings.sold_out_badge_text
+            -%}
+          </div>
+        {%- endfor -%}
+      </div>
+    {%- else -%}
+      <div class="grid {{ mobile_cols_class }} {{ desktop_cols_class }} gap-4 lg:gap-6">
+        {%- for product in collection.products limit: products_to_show -%}
+          {%- render 'product-card'
+            , product: product
+            , show_vendor: section.settings.show_vendor
+            , show_swatches: section.settings.show_swatches
+            , show_sale_badge: section.settings.show_sale_badge
+            , show_sold_out_badge: section.settings.show_sold_out_badge
+            , image_ratio: section.settings.image_ratio
+            , sale_badge_text: section.settings.sale_badge_text
+            , sold_out_badge_text: section.settings.sold_out_badge_text
+          -%}
+        {%- endfor -%}
+      </div>
+    {%- endif -%}
+  </div>
+</div>
+
+{% schema %}
+  {
+    "name": "t:sections.featured_products.name",
+    "tag": "section",
+    "class": "section-featured-products",
+    "settings": [
+      {
+        "type": "header",
+        "content": "t:sections.featured_products.headers.content"
+      },
+      {
+        "type": "text",
+        "id": "heading",
+        "label": "t:sections.featured_products.settings.heading.label",
+        "default": "Featured products"
+      },
+      {
+        "type": "collection",
+        "id": "collection",
+        "label": "t:sections.featured_products.settings.collection.label"
+      },
+      {
+        "type": "range",
+        "id": "products_to_show",
+        "label": "t:sections.featured_products.settings.products_to_show.label",
+        "min": 2,
+        "max": 12,
+        "step": 1,
+        "default": 4
+      }, {
+        "type": "header",
+        "content": "t:sections.featured_products.headers.layout"
+      }, {
+        "type": "select",
+        "id": "columns_desktop",
+        "label": "t:sections.featured_products.settings.columns_desktop.label",
+        "options": [
+          {
+            "value": "2",
+            "label": "2"
+          },
+          {
+            "value": "3",
+            "label": "3"
+          },
+          {
+            "value": "4",
+            "label": "4"
+          }
+        ],
+        "default": "4"
+      }, {
+        "type": "select",
+        "id": "columns_mobile",
+        "label": "t:sections.featured_products.settings.columns_mobile.label",
+        "options": [
+          {
+            "value": "1",
+            "label": "t:sections.featured_products.settings.columns_mobile.options.1"
+          }, {
+            "value": "2",
+            "label": "t:sections.featured_products.settings.columns_mobile.options.2"
+          }, {
+            "value": "slider",
+            "label": "t:sections.featured_products.settings.columns_mobile.options.slider"
+          }
+        ],
+        "default": "1"
+      }, {
+        "type": "header",
+        "content": "t:sections.featured_products.headers.display"
+      }, {
+        "type": "checkbox",
+        "id": "show_vendor",
+        "label": "t:sections.featured_products.settings.show_vendor.label",
+        "default": true
+      }, {
+        "type": "checkbox",
+        "id": "show_swatches",
+        "label": "t:sections.featured_products.settings.show_swatches.label",
+        "default": true
+      }, {
+        "type": "checkbox",
+        "id": "show_sale_badge",
+        "label": "t:sections.featured_products.settings.show_sale_badge.label",
+        "default": true
+      }, {
+        "type": "checkbox",
+        "id": "show_sold_out_badge",
+        "label": "t:sections.featured_products.settings.show_sold_out_badge.label",
+        "default": true
+      }, {
+        "type": "header",
+        "content": "t:sections.featured_products.headers.section_style"
+      }, {
+        "type": "color",
+        "id": "section_background_color",
+        "label": "t:sections.featured_products.settings.section_background_color.label",
+        "default": "#F7F7F7"
+      }, {
+        "type": "header",
+        "content": "t:sections.featured_products.headers.card_style"
+      }, {
+        "type": "select",
+        "id": "image_ratio",
+        "label": "t:sections.featured_products.settings.image_ratio.label",
+        "options": [
+          {
+            "value": "square",
+            "label": "t:sections.featured_products.settings.image_ratio.options.square"
+          }, {
+            "value": "portrait",
+            "label": "t:sections.featured_products.settings.image_ratio.options.portrait"
+          }, {
+            "value": "natural",
+            "label": "t:sections.featured_products.settings.image_ratio.options.natural"
+          }
+        ],
+        "default": "square"
+      }, {
+        "type": "color",
+        "id": "card_border_color",
+        "label": "t:sections.featured_products.settings.card_border_color.label",
+        "default": "#E8E8E8"
+      }, {
+        "type": "range",
+        "id": "card_border_radius",
+        "label": "t:sections.featured_products.settings.card_border_radius.label",
+        "min": 0,
+        "max": 24,
+        "step": 1,
+        "unit": "px",
+        "default": 10
+      }, {
+        "type": "color",
+        "id": "badge_background_color",
+        "label": "t:sections.featured_products.settings.badge_background_color.label",
+        "default": "#FFFFFF"
+      }, {
+        "type": "text",
+        "id": "sale_badge_text",
+        "label": "t:sections.featured_products.settings.sale_badge_text.label",
+        "info": "t:sections.featured_products.settings.sale_badge_text.info"
+      }, {
+        "type": "text",
+        "id": "sold_out_badge_text",
+        "label": "t:sections.featured_products.settings.sold_out_badge_text.label",
+        "info": "t:sections.featured_products.settings.sold_out_badge_text.info"
+      }
+    ],
+    "presets": [
+      {
+        "name": "t:sections.featured_products.name",
+        "category": "t:sections.featured_products.category"
+      }
+    ],
+    "disabled_on": {
+      "groups": ["header", "footer"]
+    }
+  }
+{% endschema %}
