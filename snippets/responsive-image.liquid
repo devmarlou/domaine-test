@@ -1,0 +1,72 @@
+{% doc %}
+  Renders a responsive <img> tag with srcset / sizes / loading / role
+  / alt / class.
+
+  Used by:
+    - snippets/product-card.liquid (primary + secondary card images)
+
+  Implementation notes
+  ────────────────────
+  Emits a bare <img> (no wrapper) so the caller controls the surrounding
+  element (e.g. an <a>). For the wrapper-with-image variant kept around
+  for the Skeleton starter sections, see snippets/image.liquid.
+
+  `widths` is a comma-separated string of integer widths (px). Each
+  produces a srcset entry "<url> <w>w". `width` is the "lead" rendered
+  width used in the bare `src` attribute (legacy fallback for browsers
+  that ignore srcset).
+
+  @param {image} image - Image object to render
+  @param {string} [class] - Classes applied to the <img>
+  @param {string} [sizes] - sizes attribute (default '100vw')
+  @param {number} [width] - "Lead" rendered width used for src= (default 800)
+  @param {string} [widths] - Comma-separated srcset widths in px (default '400,800,1200')
+  @param {string} [alt] - Override alt text (defaults to image.alt)
+  @param {string} [loading] - 'lazy' | 'eager' (default 'lazy')
+  @param {string} [data_role] - Sets data-role="..." on the <img>
+  @param {boolean} [aria_hidden] - Sets aria-hidden="true" if truthy
+
+  @example
+  {% render 'responsive-image', image: product.featured_image %}
+  {% render 'responsive-image',
+    image: variant.image,
+    class: 'absolute inset-0 w-full h-full object-cover',
+    sizes: '(min-width: 1024px) 33vw, 100vw',
+    widths: '300,600,900,1200',
+    data_role: 'primary'
+  %}
+{% enddoc %}
+
+{%- liquid
+  assign sizes = sizes | default: '100vw'
+  assign width = width | default: 800
+  assign loading = loading | default: 'lazy'
+  assign alt = alt | default: image.alt | default: ''
+  assign widths = widths | default: '400,800,1200'
+
+  assign widths_array = widths | split: ','
+  assign srcset = ''
+  for w in widths_array
+    assign w_clean = w | strip
+    assign url = image | image_url: width: w_clean
+    assign part = url | append: ' ' | append: w_clean | append: 'w'
+    if forloop.first
+      assign srcset = part
+    else
+      assign srcset = srcset | append: ', ' | append: part
+    endif
+  endfor
+-%}
+
+<img
+  src="{{ image | image_url: width: width }}"
+  srcset="{{ srcset }}"
+  sizes="{{ sizes }}"
+  alt="{{ alt | escape }}"
+  width="{{ image.width }}"
+  height="{{ image.height }}"
+  loading="{{ loading }}"
+  {% if data_role %}data-role="{{ data_role }}"{% endif %}
+  {% if aria_hidden %}aria-hidden="true"{% endif %}
+  class="{{ class }}"
+>
