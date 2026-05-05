@@ -7,8 +7,8 @@
   - snippets/product-card.liquid (one per product)
 
   Schema:
-  - Content: heading, collection, products_to_show
-  - Layout: columns_desktop (2–6), columns_mobile (1 / 2 / slider)
+  - Content: heading, collection, products_to_show (4-16)
+  - Layout: columns_desktop (2 / 3 / 4), columns_mobile (1 / 2 / slider)
   - Display: show_vendor, show_swatches, show_sale_badge,
   show_sold_out_badge
   - Card: image_ratio, card_border_color, card_border_radius,
@@ -21,19 +21,19 @@
   reads them via Tailwind arbitrary values, e.g.
   `border-[color:var(--card-border-color)]`.
 
-  Mobile slider mode swaps the container from grid → flex overflow-x-auto
-  with snap-x snap-mandatory; desktop grid takes over via the `lg:` prefix.
+  Layout modes (computed):
+    use_mobile_slider  ← columns_mobile == 'slider'
+    use_desktop_slider ← products_to_show > columns_desktop
+                         (auto: more cards than fit in the grid →
+                         horizontal scroller on desktop)
 
-  Cards-per-row Tailwind classes are looked up via `case` (Tailwind JIT
-  scans source for full class strings — dynamic concatenation like
-  `grid-cols-{{ n }}` would not be picked up).
+  The four permutations are handled by a single template with computed
+  container + card-wrapper class strings, instead of four duplicated
+  branches.
 
-  Layout uses the theme's `full-width` escape (defined in
-  `assets/critical.css`) so the background spans edge-to-edge while an
-  inner wrapper centers content with `mx-auto max-w-[var(--page-width)]`
-  and applies the page margin. The mobile slider bleeds into the page
-  margin via negative `-mx-[var(--page-margin)]` to extend to the
-  viewport edges, then re-aligns to grid on `lg:` breakpoint.
+  Cards-per-row + slider-card-width Tailwind classes are looked up via
+  `case` (Tailwind JIT scans source for full class strings — dynamic
+  concatenation like `grid-cols-{{ n }}` would not be picked up).
 {% endcomment %}
 
 {%- liquid
@@ -46,10 +46,16 @@
   case columns_desktop
     when '2'
       assign desktop_cols_class = 'lg:grid-cols-2'
+      assign desktop_slider_card_class = 'lg:w-[calc((100%-1.5rem)/2)]'
+      assign columns_desktop_n = 2
     when '3'
       assign desktop_cols_class = 'lg:grid-cols-3'
+      assign desktop_slider_card_class = 'lg:w-[calc((100%-3rem)/3)]'
+      assign columns_desktop_n = 3
     else
       assign desktop_cols_class = 'lg:grid-cols-4'
+      assign desktop_slider_card_class = 'lg:w-[calc((100%-4.5rem)/4)]'
+      assign columns_desktop_n = 4
   endcase
 
   case columns_mobile
@@ -59,9 +65,28 @@
       assign mobile_cols_class = 'grid-cols-1'
   endcase
 
-  assign use_slider = false
+  assign use_mobile_slider = false
   if columns_mobile == 'slider'
-    assign use_slider = true
+    assign use_mobile_slider = true
+  endif
+
+  assign use_desktop_slider = false
+  if products_to_show > columns_desktop_n
+    assign use_desktop_slider = true
+  endif
+
+  if use_mobile_slider and use_desktop_slider
+    assign container_class = 'flex overflow-x-auto snap-x snap-mandatory gap-4 lg:gap-6'
+    assign card_wrapper_class = 'snap-start shrink-0 w-[78%] sm:w-[48%] ' | append: desktop_slider_card_class
+  elsif use_mobile_slider
+    assign container_class = 'flex overflow-x-auto snap-x snap-mandatory gap-4 lg:grid lg:overflow-visible lg:gap-6 ' | append: desktop_cols_class
+    assign card_wrapper_class = 'snap-start shrink-0 w-[78%] sm:w-[48%] lg:w-auto'
+  elsif use_desktop_slider
+    assign container_class = 'grid gap-4 lg:flex lg:overflow-x-auto lg:snap-x lg:snap-mandatory lg:gap-6 ' | append: mobile_cols_class
+    assign card_wrapper_class = 'lg:snap-start lg:shrink-0 ' | append: desktop_slider_card_class
+  else
+    assign container_class = 'grid gap-4 lg:gap-6 ' | append: mobile_cols_class | append: ' ' | append: desktop_cols_class
+    assign card_wrapper_class = ''
   endif
 -%}
 
@@ -77,10 +102,10 @@
       <p class="text-[color:var(--color-foreground,#333333)] opacity-60">
         {{ 'sections.featured_products.empty_state' | t }}
       </p>
-    {%- elsif use_slider -%}
-      <div class="flex overflow-x-auto snap-x snap-mandatory gap-4 lg:grid {{ desktop_cols_class }} lg:gap-6">
+    {%- else -%}
+      <div class="{{ container_class }}">
         {%- for product in collection.products limit: products_to_show -%}
-          <div class="snap-start shrink-0 w-[78%] sm:w-[48%] lg:w-auto">
+          <div class="{{ card_wrapper_class }}">
             {%- render 'product-card'
               , product: product
               , show_vendor: section.settings.show_vendor
@@ -92,21 +117,6 @@
               , sold_out_badge_text: section.settings.sold_out_badge_text
             -%}
           </div>
-        {%- endfor -%}
-      </div>
-    {%- else -%}
-      <div class="grid {{ mobile_cols_class }} {{ desktop_cols_class }} gap-4 lg:gap-6">
-        {%- for product in collection.products limit: products_to_show -%}
-          {%- render 'product-card'
-            , product: product
-            , show_vendor: section.settings.show_vendor
-            , show_swatches: section.settings.show_swatches
-            , show_sale_badge: section.settings.show_sale_badge
-            , show_sold_out_badge: section.settings.show_sold_out_badge
-            , image_ratio: section.settings.image_ratio
-            , sale_badge_text: section.settings.sale_badge_text
-            , sold_out_badge_text: section.settings.sold_out_badge_text
-          -%}
         {%- endfor -%}
       </div>
     {%- endif -%}
@@ -138,8 +148,9 @@
         "type": "range",
         "id": "products_to_show",
         "label": "t:sections.featured_products.settings.products_to_show.label",
-        "min": 2,
-        "max": 12,
+        "info": "t:sections.featured_products.settings.products_to_show.info",
+        "min": 4,
+        "max": 16,
         "step": 1,
         "default": 4
       }, {
