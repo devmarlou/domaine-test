@@ -73,5 +73,80 @@
       "subtitle": "Subtitle",
       "normal": "Normal text"
     },
+  },
+  "sections": {
+    "featured_products": {
+      "name": "Featured products",
+      "category": "Products",
+      "headers": {
+        "content": "Content",
+        "layout": "Layout",
+        "display": "Display",
+        "section_style": "Section style",
+        "card_style": "Card style"
+      },
+      "settings": {
+        "heading": {
+          "label": "Heading"
+        },
+        "collection": {
+          "label": "Collection"
+        },
+        "products_to_show": {
+          "label": "Products to show"
+        },
+        "columns_desktop": {
+          "label": "Columns on desktop"
+        },
+        "columns_mobile": {
+          "label": "Mobile layout",
+          "options": {
+            "1": "1 column",
+            "2": "2 columns",
+            "slider": "Slider"
+          }
+        },
+        "show_vendor": {
+          "label": "Show vendor"
+        },
+        "show_swatches": {
+          "label": "Show variant swatches"
+        },
+        "show_sale_badge": {
+          "label": "Show sale badge"
+        },
+        "show_sold_out_badge": {
+          "label": "Show sold-out badge"
+        },
+        "image_ratio": {
+          "label": "Image aspect ratio",
+          "options": {
+            "square": "Square (1:1)",
+            "portrait": "Portrait (3:4)",
+            "natural": "Natural"
+          }
+        },
+        "section_background_color": {
+          "label": "Section background color"
+        },
+        "card_border_color": {
+          "label": "Card border color"
+        },
+        "card_border_radius": {
+          "label": "Card border radius"
+        },
+        "badge_background_color": {
+          "label": "Badge background color"
+        },
+        "sale_badge_text": {
+          "label": "Sale badge text",
+          "info": "Leave empty to use the default \"On Sale!\" string."
+        },
+        "sold_out_badge_text": {
+          "label": "Sold-out badge text",
+          "info": "Leave empty to use the default \"Sold out\" string."
+        }
+      }
+    }
   }
 }

@@ -48,5 +48,16 @@
     "submit": "Search",
     "no_results_html": "No results found for {{ terms }}",
     "results_for_html": "{{ count }} results found for {{ terms }}"
+  },
+  "product_card": {
+    "sale_badge": "On Sale!",
+    "sold_out_badge": "Sold out",
+    "swatches_label": "Color",
+    "unavailable": "Out of stock"
+  },
+  "sections": {
+    "featured_products": {
+      "empty_state": "Choose a collection to display products."
+    }
   }
 }
