@@ -1,13 +1,20 @@
-import { defineConfig } from 'vite'
-import shopify from 'vite-plugin-shopify'
-import tailwindcss from '@tailwindcss/vite'
+import { defineConfig } from "vite";
+import shopify from "vite-plugin-shopify";
+import tailwindcss from "@tailwindcss/vite";
+import shopifyClean from "@driver-digital/vite-plugin-shopify-clean";
 
 export default defineConfig({
   plugins: [
-    shopify(),
-    tailwindcss()
+    shopify({
+      tunnel: true,
+      themeRoot: ".",
+      sourceCodeDir: "frontend",
+    }),
+    shopifyClean({}),
+    tailwindcss(),
   ],
   build: {
-    emptyOutDir: false
-  }
-})
+    emptyOutDir: false,
+    sourcemap: true,
+  },
+});
