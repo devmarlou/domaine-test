@@ -1,1 +1,6 @@
 @import "tailwindcss" source("../..");
+
+* {
+  margin: 0;
+  box-sizing: border-box;
+}
