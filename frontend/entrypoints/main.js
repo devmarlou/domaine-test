@@ -19,6 +19,8 @@ import 'vite/modulepreload-polyfill'
  *     - Update [data-role=compare-price] text + visibility
  *     - Toggle [data-role=sale-badge] / [data-role=sold-out-badge] visibility
  *       (mutually exclusive — sold-out wins over sale)
+ *     - Update [data-role=custom-badge] label + colors from variant
+ *       metafields (marketing.badge_*); hidden when label blank or sold out
  *     - Set aria-pressed=true on the clicked swatch (false on siblings)
  *
  * Implementation notes:
@@ -188,6 +190,18 @@ document.addEventListener('click', async (event) => {
   const soldOutBadge = card.querySelector('[data-role="sold-out-badge"]')
   if (soldOutBadge) soldOutBadge.classList.toggle('hidden', !soldOut)
   if (saleBadge) saleBadge.classList.toggle('hidden', soldOut || !onSale)
+
+  const customBadge = card.querySelector('[data-role="custom-badge"]')
+  if (customBadge) {
+    const label = swatch.dataset.badgeLabel || ''
+    const textColor = swatch.dataset.badgeTextColor || '#111111'
+    const bgColor = swatch.dataset.badgeBackgroundColor || 'var(--badge-bg, #FFFFFF)'
+    customBadge.textContent = label
+    customBadge.style.color = textColor
+    customBadge.style.borderColor = textColor
+    customBadge.style.backgroundColor = bgColor
+    customBadge.classList.toggle('hidden', soldOut || !label)
+  }
 
   const primaryImg = card.querySelector('img[data-role="primary"]')
   const secondaryImg = card.querySelector('img[data-role="secondary"]')

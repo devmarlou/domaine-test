@@ -56,6 +56,16 @@
     Single-option (Color) products only — multi-option swatch mapping
     is out of scope for the assessment.
 
+    Custom badge is driven by three variant metafields under the
+    `marketing` namespace:
+      - badge_label                (single_line_text_field)
+      - badge_text_color           (color)
+      - badge_background_color     (color)
+    Empty label hides the badge. Sold-out wins (custom + sale hide).
+    On-sale + custom stack with custom on top. Adding a second custom
+    badge later means another `marketing.badge_2_*` triplet — no list
+    types, since admins must keep the three fields in sync.
+
   Alternative variant→image strategies (kept here for future maintainers):
 
     1. Filename matching (image.src contains 'blue.', 'blue-secondary')
@@ -96,6 +106,11 @@
   unless current_variant.available
     assign is_sold_out = true
   endunless
+
+  # ── Custom badge from variant metafields (marketing.badge_*) ──
+  assign badge_label = current_variant.metafields.marketing.badge_label
+  assign badge_text_color = current_variant.metafields.marketing.badge_text_color
+  assign badge_bg_color = current_variant.metafields.marketing.badge_background_color
 
   assign sale_text = sale_badge_text
   if sale_text == blank
@@ -174,6 +189,14 @@
         </span>
 
         <span
+          data-role="custom-badge"
+          class="px-4 py-1 rounded-full border text-sm font-medium {% if is_sold_out or badge_label == blank %}hidden{% endif %}"
+          style="background-color: {% if badge_bg_color != blank %}{{ badge_bg_color }}{% else %}var(--badge-bg, #FFFFFF){% endif %}; color: {% if badge_text_color != blank %}{{ badge_text_color }}{% else %}#111111{% endif %}; border-color: {% if badge_text_color != blank %}{{ badge_text_color }}{% else %}#111111{% endif %};"
+        >
+          {{ badge_label }}
+        </span>
+
+        <span
           data-role="sale-badge"
           class="px-4 py-1 bg-[color:var(--badge-bg,#FFFFFF)] border border-[#FF0000] rounded-full text-[#FF0000] text-sm font-medium {% if is_sold_out or on_sale == false %}hidden{% endif %}"
         >
@@ -214,6 +237,10 @@
             if variant.compare_at_price > variant.price
               assign variant_on_sale = true
             endif
+
+            assign v_badge_label = variant.metafields.marketing.badge_label
+            assign v_badge_text_color = variant.metafields.marketing.badge_text_color
+            assign v_badge_bg_color = variant.metafields.marketing.badge_background_color
           -%}
           <li>
             <button
@@ -228,6 +255,9 @@
               data-compare-price="{{ variant.compare_at_price | money }}"
               data-on-sale="{{ variant_on_sale }}"
               data-available="{{ variant.available }}"
+              data-badge-label="{{ v_badge_label | escape }}"
+              data-badge-text-color="{{ v_badge_text_color }}"
+              data-badge-background-color="{{ v_badge_bg_color }}"
               aria-label="{{ variant.title | escape }}{% unless variant.available %} ({{ 'product_card.unavailable' | t }}){% endunless %}"
               aria-pressed="{% if variant.id == current_variant.id %}true{% else %}false{% endif %}"
               class="relative size-6 rounded-full overflow-hidden border border-black/10 ring-offset-2 ring-[var(--color-foreground,#333333)] cursor-pointer motion-safe:transition-shadow hover:ring-2 focus-visible:ring-2 focus-visible:outline-none aria-pressed:ring-2 before:absolute before:-inset-1 before:content-[''] before:rounded-full {% unless variant.available %}opacity-50{% endunless %}"
