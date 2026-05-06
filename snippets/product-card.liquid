@@ -70,8 +70,7 @@
   @param {product} product - Product object to render
   @param {boolean} [show_vendor] - Show product vendor (default true)
   @param {boolean} [show_swatches] - Show variant swatches (default true)
-  @param {boolean} [show_sale_badge] - Show sale badge when on sale (default true)
-  @param {boolean} [show_sold_out_badge] - Show sold-out badge when current variant is unavailable (default true)
+  @param {boolean} [show_badges] - Show card badges (sale, sold-out, …) when applicable (default true)
   @param {string} [image_ratio] - 'square' | 'portrait' | 'natural' (default 'square')
   @param {string} [sale_badge_text] - Override locale string for the sale badge
   @param {string} [sold_out_badge_text] - Override locale string for the sold-out badge
@@ -85,8 +84,7 @@
 {% liquid
   assign show_vendor = show_vendor | default: true, allow_false: true
   assign show_swatches = show_swatches | default: true, allow_false: true
-  assign show_sale_badge = show_sale_badge | default: true, allow_false: true
-  assign show_sold_out_badge = show_sold_out_badge | default: true, allow_false: true
+  assign show_badges = show_badges | default: true, allow_false: true
   assign image_ratio = image_ratio | default: 'square'
 
   assign current_variant = product.selected_or_first_available_variant
@@ -166,25 +164,21 @@
       -%}
     {%- endif -%}
 
-    {%- if show_sale_badge or show_sold_out_badge -%}
+    {%- if show_badges -%}
       <div class="absolute top-4 left-4 flex flex-col items-start gap-2">
-        {%- if show_sold_out_badge -%}
-          <span
-            data-role="sold-out-badge"
-            class="px-4 py-1 bg-[color:var(--badge-bg,#FFFFFF)] border border-[#111111] rounded-full text-[#111111] text-sm font-medium {% unless is_sold_out %}hidden{% endunless %}"
-          >
-            {{ sold_out_text }}
-          </span>
-        {%- endif -%}
+        <span
+          data-role="sold-out-badge"
+          class="px-4 py-1 bg-[color:var(--badge-bg,#FFFFFF)] border border-[#111111] rounded-full text-[#111111] text-sm font-medium {% unless is_sold_out %}hidden{% endunless %}"
+        >
+          {{ sold_out_text }}
+        </span>
 
-        {%- if show_sale_badge -%}
-          <span
-            data-role="sale-badge"
-            class="px-4 py-1 bg-[color:var(--badge-bg,#FFFFFF)] border border-[#FF0000] rounded-full text-[#FF0000] text-sm font-medium {% if is_sold_out or on_sale == false %}hidden{% endif %}"
-          >
-            {{ sale_text }}
-          </span>
-        {%- endif -%}
+        <span
+          data-role="sale-badge"
+          class="px-4 py-1 bg-[color:var(--badge-bg,#FFFFFF)] border border-[#FF0000] rounded-full text-[#FF0000] text-sm font-medium {% if is_sold_out or on_sale == false %}hidden{% endif %}"
+        >
+          {{ sale_text }}
+        </span>
       </div>
     {%- endif -%}
   </a>

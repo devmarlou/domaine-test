@@ -113,11 +113,9 @@
         "show_swatches": {
           "label": "Show variant swatches"
         },
-        "show_sale_badge": {
-          "label": "Show sale badge"
-        },
-        "show_sold_out_badge": {
-          "label": "Show sold-out badge"
+        "show_card_badges": {
+          "label": "Show card badges",
+          "info": "Toggles all card badges (sale, sold-out, …) as a group."
         },
         "image_ratio": {
           "label": "Image aspect ratio",

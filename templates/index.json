@@ -23,7 +23,7 @@
         "columns_mobile": "slider",
         "show_vendor": true,
         "show_swatches": true,
-        "show_sale_badge": true,
+        "show_card_badges": true,
         "image_ratio": "square",
         "section_background_color": "#F7F7F7",
         "card_border_color": "#E8E8E8",
