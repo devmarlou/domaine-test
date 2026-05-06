@@ -180,7 +180,7 @@
     {%- endif -%}
 
     {%- if show_badges -%}
-      <div class="absolute top-4 left-4 flex flex-col items-start gap-2">
+      <div class="absolute top-4 left-4 flex flex-wrap items-start gap-2">
         <span
           data-role="sold-out-badge"
           class="px-4 py-1 bg-[color:var(--badge-bg,#FFFFFF)] border border-[#111111] rounded-full text-[#111111] text-sm font-medium {% unless is_sold_out %}hidden{% endunless %}"
